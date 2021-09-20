@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "..\\..\\..\\..\\MicroFrontend"
+		},
+		{
+			"path": "..\\..\\..\\..\\Landing\\learning"
+		},
+		{
+			"path": "..\\..\\..\\ads-web"
+		},
+		{
+			"path": "..\\..\\..\\..\\chiller\\chiller-report-ui"
+		},
+		{
+			"path": "..\\..\\..\\ads-api"
+		},
+		{
+			"path": "..\\.."
+		},
+		{
+			"path": "..\\..\\..\\..\\burmaIns-web"
+		}
+	]
+}
