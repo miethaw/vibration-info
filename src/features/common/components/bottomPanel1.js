@@ -65,7 +65,7 @@ class BottomPanel extends Component {
                 const data1=(data && this.props.deviceLists) && data.map((v,k)=>{
                     let R={}
                     R.date = v.ts
-                    R[this.props.deviceLists.find(c=>c.deviceId === v.name).columnName] =  v[this.props.deviceLists.find(c=>c.deviceId === v.name) && this.props.deviceLists.find(c=>c.deviceId === v.name).columnName]
+                    R[this.props.deviceLists.find(c=>c.deviceId === v.name) && this.props.deviceLists.find(c=>c.deviceId === v.name).columnName] =  v[this.props.deviceLists.find(c=>c.deviceId === v.name) && this.props.deviceLists.find(c=>c.deviceId === v.name).columnName]
                     // R.value = v[this.props.deviceLists.find(c=>c.deviceId === v.name).columnName]
 
                     return R
@@ -80,7 +80,7 @@ class BottomPanel extends Component {
                 console.log(err)
             },
             filterOption: {
-                siteId: 29, deviceId:device ? device.deviceId : (activeDevice && activeDevice.deviceId)
+                siteId: this.props.siteId, deviceId:device ? device.deviceId : (activeDevice && activeDevice.deviceId)
             }
         });
     }

@@ -1,5 +1,7 @@
 
 export const baseURL = 'http://159.65.132.10:8086/'
+export const ADS_BASE_URL = "http://128.199.168.205:5001";
+
 export const timeout = '15000'
 export const SUPER_ADMIN_ID = 1;
 
@@ -16,3 +18,6 @@ export const VIBRATION_DEVICE_DATA = "/api/modules/general-devices/v1/realTime-d
 export const PROCESS_DATA = "/api/modules/general-devices/v1/processed-data"
 
 export const ModuleData= "/api/modules/general-devices/v1/module_list"
+
+export const DOWNLOAD_REPORT = ADS_BASE_URL + "/report/generate-report"
+

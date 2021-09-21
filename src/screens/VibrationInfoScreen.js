@@ -10,12 +10,13 @@ import BottomPanel from '../features/common/components/bottomPanel1';
 import KMGradientButton from "../features/common/components/KMGradientButton";
 import { Calendar } from "react-date-range";
 import moment from "moment";
-import { fetchGraphData, fetchVibrationDeviceData, fetchVibrationDeviceList, fetchModuleData } from '../network/apiFetcher';
+import { fetchGraphData, fetchVibrationDeviceData, fetchVibrationDeviceList, fetchModuleData,fetchReportPdf } from '../network/apiFetcher';
 import { withCookies } from 'react-cookie'
 import Can, { checkModule, getModule } from '../features/common/components/Can';
 import appModule from "../features/common/components/modules"
 import RealTimeTable from '../features/common/components/RealTimeTable';
 import GaugeChart from '../features/common/components/GaugeChart'
+import WithAlert from '../features/common/hoc/withAlert';
 
 
 
@@ -197,21 +198,25 @@ class VibrationInfoScreen extends Component {
             onSuccess: data => {
                 const arrobj = []
                 const dd = (data && moduleData) && data.map((c, k) => {
-                    let R = {}
+                   
                     const obj = moduleData.find(v => v.moduleId == c.id)
                     if (obj != undefined) {
-                        arrobj.push(obj)
+                        let g={}
+                        g.moduleName = c.moduleName
+                        g.type = obj && obj.type
+                        g.category = obj && obj.category
+                        g.title = obj && obj.title
+                        arrobj.push(g)
                     }
-                    R.moduleName = c.moduleName
-                    R.type = obj && obj.type
-                    R.category = obj && obj.category
-                    R.title = obj && obj.title
-
-                    return R
+                    
+                    return arrobj
                 })
-                this.setState({moduleList: dd },()=>{
+                this.setState({moduleList: arrobj },()=>{
                    
-                    if (checkModule(dd, appModule.MD_RealTime_Table) || checkModule(dd, appModule.MD_Health_Score_Breakdown)) {
+                    if (checkModule(arrobj, appModule.MD_RealTime_Table)) {
+                        this.fetchVibrationData();
+                    }
+                    else if (checkModule(arrobj, appModule.MD_Health_Score_Breakdown)) {
                         this.fetchVibrationData();
                     }
                 });
@@ -226,6 +231,7 @@ class VibrationInfoScreen extends Component {
     }
 
     fetchVibrationData() {
+
         fetchVibrationDeviceData({
             onSuccess: data => {
 
@@ -234,7 +240,7 @@ class VibrationInfoScreen extends Component {
                     R.ts = v.ts
                     R.name = v.name
                     R.siteId= v.siteId
-                    R.value = v[this.state.deviceList.find(c=>c.deviceId === v.name).columnName]
+                    R.value = v[this.state.deviceList.find(c=>c.deviceId === v.name) && this.state.deviceList.find(c=>c.deviceId === v.name).columnName]
                     return R
                 })
                
@@ -277,6 +283,72 @@ class VibrationInfoScreen extends Component {
                 siteId: 29
             }
         });
+    }
+
+    handleReportDownload = () => {
+        this.setState({ calendarShow: false })
+        // this.showLoading(true)
+
+        const siteId = 23;
+        const report_date = moment(this.state.date).format("YYYY-MM-DD");
+        const filterOption = {
+            siteId,
+            date: report_date,
+            reportType : "vibrationReport"
+        }
+
+        this.props.notify("Generating Report ...", {
+            toastId: "report-info",
+            alertLevel: "info",
+        })
+        fetchReportPdf({ filterOption }, (networkErr, userError, respone) => {
+            if (networkErr !== null) {
+                this.props.closeToast("report-info")
+                this.props.notify("Fail Generating Report ! ", {
+                    toastId: "report-error",
+                    alertLevel: "error",
+                    autoClose: true
+                })
+                // this.showLoading(false)
+            }
+            else if (userError !== null) {
+                this.props.closeToast("report-info")
+                this.props.notify("Fail Generating Report ! ", {
+                    toastId: "report-error",
+                    alertLevel: "error",
+                    autoClose: true
+                })
+                // this.showLoading(false)
+            }
+            else {
+                var array = new Uint8Array(respone.payload.data);
+                const newBlob = new Blob([array], { type: 'application/pdf' });
+                // MS Edge and IE don't allow using a blob object directly as link href, instead it is necessary to use msSaveOrOpenBlob
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    window.navigator.msSaveOrOpenBlob(newBlob);
+                } else {
+                    // For other browsers: create a link pointing to the ObjectURL containing the blob.
+                    const objUrl = window.URL.createObjectURL(newBlob);
+                    let link = document.createElement('a');
+                    link.href = objUrl;
+                    window.open(link)
+                    link.download = `Daily_Report(${report_date}).pdf`;
+                    link.click();
+                    // For Firefox it is necessary to delay revoking the ObjectURL.
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(objUrl);
+                    }, 250);
+                    // this.showLoading(false)
+                    this.props.closeToast("report-info")
+                    this.props.notify("Generating Daily Report Done .", {
+                        toastId: "report-success",
+                        alertLevel: "success",
+                        autoClose: true
+                    });
+                }
+
+            }
+        })
     }
 
     render() {
@@ -359,7 +431,7 @@ class VibrationInfoScreen extends Component {
                                     small={true}
                                     round
                                     // disable={buttonDisable}
-                                    onClick={() => this.setState({ calendarShow: false })}
+                                    onClick={() => this.handleReportDownload()}
                                     selectTheme={"light"}
                                 />
                             </a>
@@ -443,7 +515,7 @@ class VibrationInfoScreen extends Component {
                                         resetDate={this.resetDate}
                                         theme={theme}
                                         type="horizontal"
-                                        siteId={23}
+                                        siteId={29}
                                         yLabel={v.unit}
                                         graphData={this.state.graphData}
                                         _handleDeviceSelect={this._handleDeviceSelect}
@@ -471,4 +543,4 @@ class VibrationInfoScreen extends Component {
     }
 
 }
-export default withTheme(withRouter(withCookies(VibrationInfoScreen)))
+export default WithAlert(withTheme(withRouter(withCookies(VibrationInfoScreen))))

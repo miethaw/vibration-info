@@ -1,7 +1,7 @@
 
 import getapi from "./api";
 import queryString from 'query-string'
-import { PROCESS_DATA, VIBRATION_DEVICE_DATA, VIBRATION_DEVICE_LIST,ModuleData } from "./site";
+import { PROCESS_DATA, VIBRATION_DEVICE_DATA, VIBRATION_DEVICE_LIST,ModuleData,DOWNLOAD_REPORT } from "./site";
 
 export const fetchVibrationDeviceList = async ({ onSuccess, onError, filterOption }) => {
     const res = await getapi().get(VIBRATION_DEVICE_LIST + "?" + queryString.stringify(filterOption));
@@ -41,4 +41,24 @@ export const fetchModuleData = async ({ onSuccess, onError, filterOption }) => {
     else {
         onError();
     }
+}
+
+
+export const fetchReportPdf = ({ token, filterOption }, callback) => {
+    fetch(DOWNLOAD_REPORT+ "?" + queryString.stringify(filterOption), {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+            "X-AUTH-TOKEN": "Bearer " + token,
+        },
+    })
+        .then(response => {
+            return response.json()
+        })
+        .then(data => {
+            if (data.success) callback(null, null, data)
+            else callback(null, data, null)
+        })
+        .catch(error => callback(error, null, null))
 }
